@@ -13,7 +13,7 @@
 #include <DSPLib.h>
 
 #define SIGNAL_LENGTH 256
-#define SAMPLING_FREQ 41000
+#define SAMPLING_FREQ 5000
 
 #define MIC_POWER_PORT_DIR  P6DIR
 #define MIC_POWER_PORT_OUT  P6OUT

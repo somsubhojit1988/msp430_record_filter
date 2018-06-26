@@ -5,9 +5,12 @@
  *      Author: subhojit
  */
 #include <driverlib.h>
+#include <stdio.h>
+#include "globals.h"
 #pragma vector=ADC12_VECTOR
 __interrupt void ADC12_ISR(void)
 {
+//    _bis_SR_register(GIE);
     switch(__even_in_range(ADC12IV, ADC12IV_ADC12RDYIFG))
     {
         case ADC12IV_NONE:        break;    // Vector  0:  No interrupt
@@ -16,7 +19,9 @@ __interrupt void ADC12_ISR(void)
         case ADC12IV_ADC12HIIFG:  break;    // Vector  6:  ADC12HI
         case ADC12IV_ADC12LOIFG:  break;    // Vector  8:  ADC12LO
         case ADC12IV_ADC12INIFG:  break;    // Vector 10:  ADC12IN
-        case ADC12IV_ADC12IFG0:   break;    // Vector 12:  ADC12MEM0 Interrupt
+        case ADC12IV_ADC12IFG0:     // Vector 12:  ADC12MEM0 Interrupt
+            GPIO_toggleOutputOnPin(TOGGLE_PORT, TOGGLE_PIN);
+            break;
         case ADC12IV_ADC12IFG1:   break;    // Vector 14:  ADC12MEM1
         case ADC12IV_ADC12IFG2:   break;    // Vector 16:  ADC12MEM2
         case ADC12IV_ADC12IFG3:   break;    // Vector 18:  ADC12MEM3

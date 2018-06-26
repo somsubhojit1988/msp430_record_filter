@@ -43,13 +43,11 @@ volatile uint32_t cycleCount = 0;
 
 msp_status status;
 
-void filter(){
+void filter(_q15* input){
 
     //    _bic_SR_register(GIE);
-
     uint16_t ctr = 0;
-    _q15* input;
-    input = Audio_get_filled_buffer();
+    //    input = Audio_get_filled_buffer();
 
     if(input == NULL)
         return;
@@ -75,9 +73,7 @@ void filter(){
     df1Params.coeffs = filterCoeffs;
     df1Params.states = states;
 
-//    msp_benchmarkStart(MSP_BENCHMARK_BASE, 8);
     status = msp_biquad_cascade_df1_q15(&df1Params, input_data, filtered_data);
-//    cycleCount = msp_benchmarkStop(MSP_BENCHMARK_BASE);
 
     if(status != MSP_SUCCESS){
         GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
@@ -85,18 +81,31 @@ void filter(){
     }
     msp_checkStatus(status);
 
-    printf("%s:%d : input_ptr = %s filter o/p status %d\n",
-           __FUNCTION__, __LINE__, BASE_ADDR(input), (int) status);
+    //    printf("%s:%d : input_ptr = %s filter o/p status %d\n",
+    //           __FUNCTION__, __LINE__, BASE_ADDR(input), (int) status);
 }
 
-void Filter_loop()
+void filter_at_once() {
+    if(audConfig.filledBuffer == NULL)
+        return;
+    filter(adc_buffer1);
+    filter(adc_buffer2);
+
+    //    printf("(%s:%d) Done filtering both buffer 1 and 2\n", __FUNCTION__, __LINE__);
+}
+
+void rec_filter_loop()
 {
+    Audio_setup_recording();
+
     Audio_start_recording();
 
     while(mode == REC_FILTER_LOOP){
 
+        GPIO_setOutputLowOnPin(TOGGLE_PORT, TOGGLE_PIN);
+
         _bis_SR_register(LPM4_bits + GIE);
 
-        filter();
+        filter_at_once();
     }
 }

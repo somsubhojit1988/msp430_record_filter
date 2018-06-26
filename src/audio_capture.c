@@ -101,6 +101,7 @@ void Audio_setup_recording() {
     // Mic input to ADC, (AVCC/AVSS ref), sequence end bit set
     ADC12MCTL0 = MIC_INPUT_CHAN | ADC12EOS;
 
+    //    ADC12IER0 |= ADC12IE0;
     //    ADC12IER0 = ADC12IER0|ADC12IE0_1; //enabling interrupt for mem0
 
     // Initialize Timer_A channel 1 to be used as ADC12 trigger

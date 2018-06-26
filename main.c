@@ -7,9 +7,10 @@
 
 void initgpio();
 void initclk();
+void show_mode(Appmode mode);
 
 AudioCaptureConfig audConfig;
-Appmode mode = SETUP_RECORD;
+Appmode mode = ADC_SAMPLE_DMA_LED_TOGGLE;
 
 int main(void)
 {
@@ -20,7 +21,8 @@ int main(void)
 
     PM5CTL0 &= ~LOCKLPM5;           // Clear lock bit
 
-    // Enable Switch interrupt
+    //
+    //    // Enable Switch interruptho
     GPIO_clearInterrupt(PUSHBUTTON1_PORT, PUSHBUTTON1_PIN);
     GPIO_enableInterrupt(PUSHBUTTON1_PORT, PUSHBUTTON1_PIN);
     GPIO_clearInterrupt(PUSHBUTTON2_PORT, PUSHBUTTON2_PIN);
@@ -32,18 +34,24 @@ int main(void)
         switch(mode)
         {
         case IDLE:
+            show_mode(mode);
             GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
             _bis_SR_register(LPM4_bits + GIE);
             break;
 
-        case SETUP_RECORD:
-            GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN1);
-            Audio_setup_recording();
-            mode = REC_FILTER_LOOP;
+        case ADC_SAMPLE_LED_TOGGLE:
+            show_mode(mode);
+            sample_and_toggle_run();
+            break;
+
+        case ADC_SAMPLE_DMA_LED_TOGGLE:
+            show_mode(mode);
+            sample_dma_led_toggle_run();
             break;
 
         case REC_FILTER_LOOP:
-            Filter_loop();
+            show_mode(mode);
+            rec_filter_loop();
             break;
 
         default:
@@ -52,6 +60,8 @@ int main(void)
             mode = IDLE;
             break;
         }
+
+        GPIO_setOutputLowOnPin(TOGGLE_PORT, TOGGLE_PIN);
     }
 }
 
@@ -99,7 +109,6 @@ void initgpio()
     GPIO_selectInterruptEdge(PUSHBUTTON2_PORT,
                              PUSHBUTTON2_PIN,
                              GPIO_HIGH_TO_LOW_TRANSITION);
-
 }
 
 void initclk(){
@@ -120,4 +129,44 @@ void initclk(){
     } while (SFRIFG1 & OFIFG);              // Test oscillator fault flag
     CSCTL0_H = 0;                           // Lock CS registers
 
+}
+
+void show_mode(Appmode mode) {
+    uint16_t ctr = 100;
+    switch(mode)
+    {
+    case ADC_SAMPLE_LED_TOGGLE:
+        GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN1);
+        break;
+    case ADC_SAMPLE_DMA_LED_TOGGLE:
+        GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
+        break;
+    case REC_FILTER_LOOP:
+        GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN1);
+        break;
+    default:
+        break;
+    }
+    while(ctr--){
+        _delay_cycles(200000);
+    }
+
+
+    // indicate mode is about to start
+
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
+
+    for (ctr=50;ctr>0;ctr--)
+    {
+        GPIO_toggleOutputOnPin(GPIO_PORT_P1, GPIO_PIN1);
+        GPIO_toggleOutputOnPin(GPIO_PORT_P1, GPIO_PIN0);
+        __delay_cycles(200000);
+    }
+
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN1);
 }

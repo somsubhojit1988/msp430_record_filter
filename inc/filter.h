@@ -10,6 +10,6 @@
 
 //#include "globals.h"
 
-void Filter_loop();
+void rec_filter_loop(void);
 
 #endif /* INC_FILTER_H_ */

@@ -25,6 +25,7 @@ __interrupt void dmaIsrHandler(void)
         DMA_disableInterrupt(DMA_CHANNEL_1);
 
         audConfig.filledBuffer = adc_buffer1;
+
         audConfig.filledBuffer1 = true;
 
         // Enable DMA channel 2 interrupt
@@ -33,8 +34,9 @@ __interrupt void dmaIsrHandler(void)
         // Enable DMA channel 2 transfers
         DMA_enableTransfers(DMA_CHANNEL_2);
 
-        // Start Cpu on exit
-        __bic_SR_register_on_exit(LPM4_bits);
+        //
+        //        // Start Cpu on exit
+        //        __bic_SR_register_on_exit(LPM4_bits);
         break;
 
     case DMAIV_DMA2IFG:
@@ -52,8 +54,16 @@ __interrupt void dmaIsrHandler(void)
         // Enable DMA channel 1 transfers
         DMA_enableTransfers(DMA_CHANNEL_1);
 
-        // Start Cpu on exit
-        __bic_SR_register_on_exit(LPM4_bits);
+        if(mode == ADC_SAMPLE_DMA_LED_TOGGLE)
+        {
+            GPIO_toggleOutputOnPin(TOGGLE_PORT, TOGGLE_PIN);
+        }
+        else
+        {
+            GPIO_setOutputHighOnPin(TOGGLE_PORT, TOGGLE_PIN);
+            // Start Cpu on exit
+            __bic_SR_register_on_exit(LPM4_bits);
+        }
         break;
 
     default: break;
